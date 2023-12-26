@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy Shop Stock Management</title>
+</head>
+<body>
+
+    <h1>Candy Shop Stock Management</h1>
+
+    <h2>Seller Section</h2>
+    <form id="addItemForm" onsubmit="addToStock(event)">
+        <label for="candyName">Candy Name:</label>
+        <input type="text" id="candyName" required><br>
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" required><br>
+
+        <label for="price">Price (Rs):</label>
+        <input type="number" id="price" required><br>
+
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" required><br>
+
+        <button type="submit">Add Item</button>
+    </form>
+
+    <h2>Buyer Section</h2>
+
+    <ul id="listofitems" class="list-group"></ul>
+
+    <hr>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+
+    <script src="project2.js"></script>
+</body>
+</html>
