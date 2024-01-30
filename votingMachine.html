@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting Machine</title>
+    <style>
+        #totalVoteContainer {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="totalVoteContainer">
+        <h1>Class Monitor Vote</h1>
+        <h6 id="totalVotes">Total Votes: 0</h6>
+    </div>
+
+    <form id="votingForm" onsubmit="saveOnServer(event);">
+        <label for="studentName">Student Name:</label>
+        <input type="text" name="UserName" id="studentName" required>
+        <label for="classMonitor" class="form-label">Class Monitor:</label>
+        <select class="form-select" id="category" required>
+            <option value="Pappu">Pappu</option>
+            <option value="Biplob">Biplob</option>
+            <option value="Minaj">Minaj</option>
+        </select>
+        <button type="submit">Vote</button>
+    </form>
+
+    <div>
+        <h1>Pappu</h1>
+        <h6 id="pappuVotes">Total Votes: 0</h6>
+        <ul id="pappuVoterList" class="voterList"></ul>
+    </div>
+
+    <div>
+        <h1>Biplob</h1>
+        <h6 id="biplobVotes">Total Votes: 0</h6>
+        <ul id="biplobVoterList" class="voterList"></ul>
+    </div>
+
+    <div>
+        <h1>Minaj</h1>
+        <h6 id="minajVotes">Total Votes: 0</h6>
+        <ul id="minajVoterList" class="voterList"></ul>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.5/axios.min.js"></script>
+
+    <script>
+        function saveOnServer(event) {
+            event.preventDefault();
+            try {
+                const studentName = event.target.UserName.value;
+                const candidateName = event.target.category.value;
+
+                const obj = {
+                    studentName,
+                    candidateName
+                };
+
+                axios.post('https://crudcrud.com/api/a7687d41370b4fa0831c8eeb242f4ea7/vote', obj, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then((res) => {
+                        showVoteOnScreen(res.data);
+                        updateTotalVotes();
+                        console.log(res);
+                    })
+                    .catch((err) => {
+                        displayError("<h4> Error saving vote! </h4>");
+                        console.error(err);
+                    });
+
+                event.target.reset();
+            } catch (error) {
+                displayError("<h4> Error! </h4>");
+                console.error(error);
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            axios.get('https://crudcrud.com/api/a7687d41370b4fa0831c8eeb242f4ea7/vote')
+                .then((res) => {
+                    console.log(res);
+                    for (var i = 0; i < res.data.length; i++) {
+                        showVoteOnScreen(res.data[i]);
+                    }
+                    updateTotalVotes();
+                })
+                .catch((err) => {
+                    displayError("<h4>Error retrieving votes!</h4>");
+                    console.error(err);
+                });
+        });
+
+        function showVoteOnScreen(obj) {
+            const candidateName = obj.candidateName ? obj.candidateName.toLowerCase() : 'unknown';
+            const parentElem = document.getElementById(candidateName + 'VoterList');
+
+            if (parentElem) {
+                const childElem = document.createElement('li');
+                childElem.className = 'voterList';
+                childElem.textContent = obj.studentName;
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'btn btn-danger';
+                deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i> Delete';
+
+                deleteButton.onclick = () => {
+                    axios.delete(`https://crudcrud.com/api/a7687d41370b4fa0831c8eeb242f4ea7/vote/${obj._id}`)
+                        .then(() => {
+                            parentElem.removeChild(childElem);
+                            updateTotalVotes();
+                            location.reload();
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
+                };
+
+                childElem.appendChild(deleteButton);
+
+                parentElem.appendChild(childElem);
+
+                const totalVotesElem = document.getElementById(candidateName + 'Votes');
+                totalVotesElem.textContent = 'Total Votes: ' + parentElem.children.length;
+            } else {
+                console.error(`Parent element ID '${candidateName}VoterList' not found.`);
+            }
+        }
+
+
+
+        function updateTotalVotes() {
+            const pappuVotes = document.getElementById('pappuVotes').textContent.split(' ')[2];
+            const biplobVotes = document.getElementById('biplobVotes').textContent.split(' ')[2];
+            const minajVotes = document.getElementById('minajVotes').textContent.split(' ')[2];
+
+            const totalVotes = parseInt(pappuVotes) + parseInt(biplobVotes) + parseInt(minajVotes);
+            document.getElementById('totalVotes').textContent = 'Total Votes: ' + totalVotes;
+        }
+
+        function displayError(message) {
+            const errorContainer = document.createElement('div');
+            errorContainer.innerHTML = message;
+            document.body.appendChild(errorContainer);
+        }
+    </script>
+</body>
+
+</html>
