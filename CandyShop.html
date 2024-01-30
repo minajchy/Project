@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candy Shop</title>
+</head>
+<body>
+
+<div id="candyForm">
+    <h2>Add Candy</h2>
+    <form onsubmit="addToStock(event)">
+        <label for="candyName">Candy Name:</label>
+        <input type="text" id="candyName" required>
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" required>
+
+        <label for="price">Price:</label>
+        <input type="number" id="price" required>
+
+        <label for="quantity">Quantity:</label>
+        <input type="number" id="quantity" required>
+
+        <button type="submit">Add Item</button>        
+    </form>
+</div>
+
+<div id="candyList">
+    <h2>Candy List</h2>
+    <ul id="listofitems"></ul>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.3/axios.min.js"></script>
+<script>
+function fetchDataFromServer(url) {
+  return axios.get(url)
+    .then(response => response.data)
+    .catch(error => {
+      throw new Error(`Error ${error.message}`);
+    });
+}
+
+function displayCandiesOnScreen(candies) {
+  const parentElem = document.getElementById('listofitems');
+  parentElem.innerHTML = '';
+
+  for (const candy of candies) {
+    showCandyOnScreen(candy);
+  }
+}
+
+async function initializeCandies() {
+  try {
+    const res = await fetchDataFromServer('https://crudcrud.com/api/93f743d6f1f642f2b2ca56febf44f614/some');
+    console.log(res);
+    displayCandiesOnScreen(res);  // Remove the filter here
+    return res;
+  } catch (err) {
+    document.body.innerHTML = `<h4> ERROR! ${err.message} </h4>`;
+    console.error(err);
+    throw err;
+  }
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  await initializeCandies();
+});
+
+async function addToStock(event) {
+  event.preventDefault();
+  const candyName = event.target.candyName.value;
+  const description = event.target.description.value;
+  const price = event.target.price.value;
+  const quantity = event.target.quantity.value;
+
+  const candyObject = {
+    candyName,
+    description,
+    price,
+    quantity
+  };
+
+  try {
+    const res = await axios.post('https://crudcrud.com/api/93f743d6f1f642f2b2ca56febf44f614/some', candyObject, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    showCandyOnScreen(res.data);
+    console.log(res.data);
+  } catch (err) {
+    document.body.innerHTML = `<h4> ERROR! ${err.message}</h4>`;
+    console.log(err);
+  }
+
+  event.target.reset();
+}
+
+function showCandyOnScreen(candy) {
+  const parentElem = document.getElementById('listofitems');
+  const childElem = document.createElement('li');
+  childElem.className = 'list-group-item';
+
+  const candyName = candy.candyName ? candy.candyName : "Undefined";
+  const description = candy.description ? candy.description : "Undefined";
+  const price = candy.price ? candy.price : "Undefined";
+  const quantity = candy.quantity ? candy.quantity : "Undefined";
+
+  childElem.textContent = `${candyName} - ${description}  - ${price} - ${quantity}`;
+
+  const buy1Button = createBuyButton(candy, 1);
+  const buy2Button = createBuyButton(candy, 2);
+  const buy3Button = createBuyButton(candy, 3);
+
+  childElem.appendChild(buy1Button);
+  childElem.appendChild(buy2Button);
+  childElem.appendChild(buy3Button);
+
+  parentElem.appendChild(childElem);
+}
+
+function createBuyButton(candy, quantity) {
+  const buyButton = document.createElement('button');
+  buyButton.textContent = `Buy ${quantity}`;
+  buyButton.addEventListener('click', () => {
+    handleBuy(candy, quantity);
+  });
+  return buyButton;
+}
+
+async function handleBuy(candy, quantity) {
+  if (candy.quantity >= quantity) {
+    candy.quantity -= quantity;
+    try {
+      await updateQuantityOnServer(candy._id, candy.quantity, candy.candyName, candy.description, candy.price);
+      updateQuantityOnScreen(candy);
+    } catch (err) {
+      console.error(err);
+    }
+  } else {
+    console.log("Error: Insufficient quantity!");
+  }
+}
+
+async function updateQuantityOnServer(candyId, newQuantity, candyName, description, price) {
+  try {
+    const res = await axios.put(`https://crudcrud.com/api/93f743d6f1f642f2b2ca56febf44f614/some/${candyId}`, {
+      candyName: candyName,
+      description: description,
+      price: price,
+      quantity: newQuantity
+    });
+    console.log(res);
+  } catch (err) {
+    console.error(err);
+    throw new Error(`Error ${err.message}`);
+  }
+}
+
+function updateQuantityOnScreen(candy) {
+  const itemList = document.getElementById('listofitems');
+  const candyElement = Array.from(itemList.children).find(elem => elem.textContent.includes(candy.candyName));
+  if (candyElement) {
+    candyElement.textContent = `${candy.candyName} - ${candy.description} - ${candy.price} - ${candy.quantity}`;
+
+    const buy1Button = createBuyButton(candy, 1);
+    const buy2Button = createBuyButton(candy, 2);
+    const buy3Button = createBuyButton(candy, 3);
+
+    candyElement.appendChild(buy1Button);
+    candyElement.appendChild(buy2Button);
+    candyElement.appendChild(buy3Button);
+  }
+}
+</script>
+</body>
+</html>
